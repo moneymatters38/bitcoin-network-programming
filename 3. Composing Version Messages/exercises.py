@@ -61,17 +61,17 @@ def serialize_version_payload(
     # message starts empty, we add to it for every field
     msg = b''
     # version
-    msg += ZERO * 4
+    msg += int_to_little_endian(version, 4)
     # services
-    msg += ZERO * 8
+    msg += int_to_little_endian(services, 8)
     # timestamp
-    msg += ZERO * 8
+    msg += int_to_little_endian(timestamp, 8)
     # receiver address
     msg += ZERO * 26
     # sender address
     msg += ZERO * 26
     # nonce
-    msg += ZERO * 8
+    msg += int_to_little_endian(nonce, 8)
     # user agent
     msg += ZERO * 1 # zero byte signifies an empty varstr
     # start height
