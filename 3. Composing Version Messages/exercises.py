@@ -27,10 +27,10 @@ def serialize_address(address, has_timestamp):
     return result
 
 def int_to_little_endian(integer, length):
-    raise NotImplementedError()
+    return integer.to_bytes(length, byteorder='little')
 
 def int_to_big_endian(integer, length):
-    raise NotImplementedError()
+    return integer.to_bytes(length, byteorder='big')
     
 def services_dict_to_int(services_dict):
     raise NotImplementedError()
