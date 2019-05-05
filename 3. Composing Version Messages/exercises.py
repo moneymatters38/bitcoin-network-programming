@@ -75,7 +75,7 @@ def serialize_version_payload(
     # user agent
     msg += ZERO * 1 # zero byte signifies an empty varstr
     # start height
-    msg += ZERO * 4
+    msg += int_to_little_endian(start_height, 4)
     # relay
     msg += ZERO * 1
     return msg 
