@@ -33,7 +33,19 @@ def int_to_big_endian(integer, length):
     return integer.to_bytes(length, byteorder='big')
     
 def services_dict_to_int(services_dict):
-    raise NotImplementedError()
+    result = 0
+    key_to_multiplier = {
+        'NODE_NETWORK': 2**0,
+        'NODE_GETUTXO': 2**1,
+        'NODE_BLOOM': 2**2,
+        'NODE_WITNESS': 2**3,
+	'NODE_CASH': 2**4, 
+        'NODE_NETWORK_LIMITED': 2**10,
+    }
+    for key, value in services_dict.items():
+        result += key_to_multiplier[key] if value else 0
+    return result
+
 
 def bool_to_bytes(bool):
     raise NotImplementedError()
