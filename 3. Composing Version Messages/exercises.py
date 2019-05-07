@@ -51,7 +51,15 @@ def bool_to_bytes(bool):
     return bytes([int(bool)])
     
 def serialize_varint(i):
-    raise NotImplementedError()
+    if i < 253:
+        return i.to_bytes(1, 'little')
+    elif i < 256**2:
+        return b'\xfd' + i.to_bytes(2, 'little')
+    elif i < 256**4:
+        return b'\xfe' + i.to_bytes(4, 'little')
+    elif i < 256**8:
+        return b'\xff' + i.to_bytes(8, 'little')
+        
     
 def serialize_varstr(bytes):
     raise NotImplementedError()
