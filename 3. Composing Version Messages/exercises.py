@@ -61,7 +61,7 @@ def serialize_varstr(bytes):
 #     raise NotImplementedError()
     
 def serialize_version_payload(
-        version=70015, services=0, timestamp=None,
+        version=70015, services_dict={}, timestamp=None,
         receiver_address=dummy_address,
         sender_address=dummy_address,
         nonce=None, user_agent=b'/buidl-army/',
@@ -75,7 +75,7 @@ def serialize_version_payload(
     # version
     msg += int_to_little_endian(version, 4)
     # services
-    msg += int_to_little_endian(services, 8)
+    msg += int_to_little_endian(services_dict_to_int(services_dict), 8)
     # timestamp
     msg += int_to_little_endian(timestamp, 8)
     # receiver address
