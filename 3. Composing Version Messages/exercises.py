@@ -105,7 +105,7 @@ def serialize_version_payload(
 def serialize_message(command, payload):
     result = bytes.fromhex('F9 BE B4 D9')
     result += command + (12-len(command))*b'\x00'
-    result += b'payload length bytes'
+    result += int_to_little_endian(len(payload), 4)
     result += b'checksum bytes'
     result += b'payload bytes'
     return result
