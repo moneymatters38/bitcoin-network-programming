@@ -48,7 +48,7 @@ def services_dict_to_int(services_dict):
 
 
 def bool_to_bytes(bool):
-    raise NotImplementedError()
+    return bytes([int(bool)])
     
 def serialize_varint(i):
     raise NotImplementedError()
@@ -89,7 +89,7 @@ def serialize_version_payload(
     # start height
     msg += int_to_little_endian(start_height, 4)
     # relay
-    msg += ZERO * 1
+    msg += bool_to_bytes(relay)
     return msg 
 
 def serialize_message(command, payload):
