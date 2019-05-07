@@ -114,20 +114,20 @@ def handshake(address):
     stream = sock.makefile("rb")
 
     # Step 1: our version message
-    sock.sendall("OUR VERSION MESSAGE")
+    sock.sendall(serialize_message(command=b"version", payload=serialize_version_payload()))
     print("Sent version")
 
     # Step 2: their version message
-    peer_version = "READ THEIR VERSION MESSAGE HERE"
+    peer_version = read_message(stream) 
     print("Version: ")
-    print(peer_version)
+    pprint(peer_version)
 
     # Step 3: their version message
-    peer_verack = "READ THEIR VERACK MESSAGE HERE"
+    peer_verack = read_message(stream) 
     print("Verack: ", peer_verack)
 
     # Step 4: our verack
-    sock.sendall("OUR VERACK HERE")
+    sock.sendall(serialize_message(command=b"verack", payload=serialize_version_payload()))
     print("Sent verack")
 
     return sock, stream
