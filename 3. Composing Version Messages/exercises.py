@@ -103,7 +103,7 @@ def serialize_version_payload(
     return msg 
 
 def serialize_message(command, payload):
-    result = b'magic bytes'
+    result = bytes.fromhex('F9 BE B4 D9')
     result += b'command bytes'
     result += b'payload length bytes'
     result += b'checksum bytes'
