@@ -95,7 +95,7 @@ def serialize_version_payload(
     # nonce
     msg += int_to_little_endian(nonce, 8)
     # user agent
-    msg += ZERO * 1 # zero byte signifies an empty varstr
+    msg += serialize_varstr(user_agent)
     # start height
     msg += int_to_little_endian(start_height, 4)
     # relay
