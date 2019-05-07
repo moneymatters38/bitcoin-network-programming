@@ -1,7 +1,7 @@
 import time
 import socket
 from random import randint
-from lib import compute_checksum
+from hashlib import sha256
 
 ZERO = b'\x00'
 IPV4_PREFIX = b"\x00" * 10 + b"\x00" * 2
@@ -66,9 +66,8 @@ def serialize_varint(i):
 def serialize_varstr(bytes):
     return serialize_varint(len(bytes)) + bytes
     
-# Try implementing yourself here:
-# def compute_checksum(bytes):
-#     raise NotImplementedError()
+def compute_checksum(bytes):
+    return sha256(sha256(bytes).digest()).digest()[:4]
     
 def serialize_version_payload(
         version=70015, services_dict={}, timestamp=None,
@@ -106,7 +105,7 @@ def serialize_message(command, payload):
     result = bytes.fromhex('F9 BE B4 D9')
     result += command + (12-len(command))*b'\x00'
     result += int_to_little_endian(len(payload), 4)
-    result += b'checksum bytes'
+    result += compute_checksum(payload)
     result += b'payload bytes'
     return result
 
