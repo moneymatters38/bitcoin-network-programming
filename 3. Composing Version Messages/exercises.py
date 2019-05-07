@@ -59,10 +59,12 @@ def serialize_varint(i):
         return b'\xfe' + i.to_bytes(4, 'little')
     elif i < 256**8:
         return b'\xff' + i.to_bytes(8, 'little')
+    else:
+        raise RuntimeError('integer too large: {}'.format(i))
         
     
 def serialize_varstr(bytes):
-    raise NotImplementedError()
+    return serialize_varint(len(bytes)) + bytes
     
 # Try implementing yourself here:
 # def compute_checksum(bytes):
