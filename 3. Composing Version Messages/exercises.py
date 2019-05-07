@@ -106,7 +106,7 @@ def serialize_message(command, payload):
     result += command + (12-len(command))*b'\x00'
     result += int_to_little_endian(len(payload), 4)
     result += compute_checksum(payload)
-    result += b'payload bytes'
+    result += payload
     return result
 
 def handshake(address):
