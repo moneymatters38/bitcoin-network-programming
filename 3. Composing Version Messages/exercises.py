@@ -20,7 +20,7 @@ def ip_to_bytes(ip):
 def serialize_address(address, has_timestamp):
     result = b""
     if has_timestamp:
-        result += int_to_little_endian(address['timestamp'], 8)
+        result += int_to_little_endian(address['timestamp'], 4)
     result += int_to_little_endian(address['services'], 8)
     result += ip_to_bytes(address['ip'])
     result += int_to_big_endian(address['port'], 2)
@@ -89,9 +89,9 @@ def serialize_version_payload(
     # timestamp
     msg += int_to_little_endian(timestamp, 8)
     # receiver address
-    msg += ZERO * 26
+    msg += serialize_address(receiver_address, False)
     # sender address
-    msg += ZERO * 26
+    msg += serialize_address(sender_address, False)
     # nonce
     msg += int_to_little_endian(nonce, 8)
     # user agent
