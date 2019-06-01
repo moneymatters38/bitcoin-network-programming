@@ -8,7 +8,7 @@ from random import randint
 from base64 import b32decode, b32encode
 
 
-logging.basicConfig(level="INFO", filename='crawler.log', 
+logging.basicConfig(level="INFO", filename='crawler.log',
         format='%(threadName)-6s %(asctime)s %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -165,7 +165,7 @@ def read_addr_payload(stream):
 def read_msg(stream):
     magic = stream.read(4)
     if magic != NETWORK_MAGIC:
-        raise BitcoinProtocolError(f'Magic is wrong: {magic}')
+        raise BitcoinProtocolError('Magic is wrong: {0}'.format(magic))
     command = stream.read(12)
     command = command.strip(b'\x00')
     payload_length = int.from_bytes(stream.read(4), 'little')
@@ -219,6 +219,6 @@ def query_dns_seeds():
             new_addresses = [(ai[-1][0], 8333) for ai in addr_info]
             addresses.extend(list(set(new_addresses)))
         except Exception as e:
-            logger.info(f"error fetching addresses from {dns_seed}")
+            logger.info("error fetching addresses from {}".format(dns_seed))
             continue
     return addresses

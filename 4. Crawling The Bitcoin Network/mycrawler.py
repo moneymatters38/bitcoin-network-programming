@@ -1,4 +1,4 @@
-from lib import handshake, read_msg
+from lib import handshake, read_msg, serialize_msg
 
 def listener(address):
     # Establish connection
@@ -10,7 +10,13 @@ def listener(address):
         msg = read_msg(stream)
         command = msg['command']
         payload_len = len(msg['payload'])
-        print('Received a "{command}" containing {payload_len} bytes')
+        print('Received a {} containing {} bytes'.format(command, payload_len))
 
-if __name__ == 'main':
+        # respond to pong
+        if command == b'ping':
+            res = serialize_msg(command=b'pong', payload=msg['payload'])
+            sock.sendall(res)
+            print('Sent pong')
+
+if __name__ == '__main__':
     listener(('204.236.245.12', '8333'))
