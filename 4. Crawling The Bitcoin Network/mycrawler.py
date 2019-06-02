@@ -36,6 +36,14 @@ class Connection:
         msg = serialize_msg(command=b"verack")
         self.sock.sendall(msg)
 
+    def send_pong(self, payload):
+        res = serialize_msg(command=b'pong', payload=payload)
+        self.sock.sendall(res)
+        print('Sent pong')
+
+    def send_getaddr(self):
+        self.sock.sendall(serialize_msg(b'getaddr'))
+
     def handle_version(self, payload):
         # save their version payload
         stream = BytesIO(payload)
@@ -46,12 +54,10 @@ class Connection:
 
     def handle_verack(self, payload):
         # Request peer's peers
-        self.sock.sendall(serialize_msg(b'getaddr'))
+        self.send_getaddr()
 
     def handle_ping(self, payload):
-        res = serialize_msg(command=b'pong', payload=payload)
-        self.sock.sendall(res)
-        print('Sent pong')
+        self.send_pong(payload)
 
     def handle_addr(self, payload):
         payload = read_addr_payload(BytesIO(payload))
@@ -69,7 +75,8 @@ class Connection:
             getattr(self, method_name)(msg['payload'])
 
     def remain_alive(self):
-        return not self.nodes_discovered
+        timed_out = time.time() - self.start > self.timeout
+        return not timed_out and not self.nodes_discovered
 
     def open(self):
         # set start time
