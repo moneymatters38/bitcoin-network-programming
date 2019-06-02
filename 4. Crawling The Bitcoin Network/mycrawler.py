@@ -23,6 +23,31 @@ class Connection:
         self.peer_version_payload = None
         self.nodes_discovered = []
 
+    def handle_msg(self):
+        # Handle next message
+        msg = read_msg(self.stream)
+        command = msg['command']
+        payload_len = len(msg['payload'])
+        print('Received a {} containing {} bytes'.format(command, payload_len))
+
+        # respond to ping
+        if command == b'ping':
+            res = serialize_msg(command=b'pong', payload=msg['payload'])
+            self.sock.sendall(res)
+            print('Sent pong')
+
+        # handle peer lists
+        if command == b'addr':
+            payload = read_addr_payload(BytesIO(msg['payload']))
+            if len(payload['addresses']) > 1:
+                self.nodes_discovered.extend([
+                    (a['ip'], a['port']) for a in payload['addresses']
+                    ])
+                break
+
+    def remain_alive(self):
+        return not self.nodes_discovered
+
     def open(self):
         # Establish connection
         print("Connecting to {}".format(self.node.ip))
@@ -33,31 +58,12 @@ class Connection:
         self.sock.sendall(serialize_msg(b'getaddr'))
 
         # Print every possible gossip message we receive
-        while True:
-            # Handle next message
-            msg = read_msg(self.stream)
-            command = msg['command']
-            payload_len = len(msg['payload'])
-            print('Received a {} containing {} bytes'.format(command, payload_len))
-
-            # respond to ping
-            if command == b'ping':
-                res = serialize_msg(command=b'pong', payload=msg['payload'])
-                self.sock.sendall(res)
-                print('Sent pong')
-
-            # handle peer lists
-            if command == b'addr':
-                payload = read_addr_payload(BytesIO(msg['payload']))
-                if len(payload['addresses']) > 1:
-                    self.nodes_discovered.extend([
-                        (a['ip'], a['port']) for a in payload['addresses']
-                        ])
-                    break
-
+        while self.remain_alive():
+            self.handle_msg()
 
     def close(self):
-        pass
+        if self.sock:
+            self.sock.close()
 
 class Crawler:
 
@@ -86,6 +92,8 @@ def crawler(nodes):
         except Exception as e:
             print("Got error {}".format(str(e)))
             continue
+        finally:
+            conn.close()
 
         # Handle the results
         nodes.extend(conn.nodes_discovered)
