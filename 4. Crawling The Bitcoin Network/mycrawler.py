@@ -1,4 +1,4 @@
-from lib import handshake, read_msg, serialize_msg, read_varint, read_address
+from lib import handshake, read_msg, serialize_msg, read_varint, read_address, BitcoinProtocolError
 from io import BytesIO
 import time
 
@@ -93,7 +93,7 @@ def crawler(nodes):
         try:
             conn = Connection(node)
             conn.open()
-        except Exception as e:
+        except (OSError, BitcoinProtocolError) as e:
             print("Got error {}".format(str(e)))
             continue
         finally:
