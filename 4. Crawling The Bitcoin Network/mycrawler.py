@@ -74,7 +74,23 @@ class Crawler:
         self.nodes = nodes
 
     def crawl(self):
-        pass
+        while True:
+            # Get next node and connect
+            node = self.nodes.pop()
+            try:
+                conn = Connection(node)
+                conn.open()
+            except (OSError, BitcoinProtocolError) as e:
+                print("Got error {}".format(str(e)))
+                continue
+            finally:
+                conn.close()
+
+            # Handle the results
+            self.nodes.extend(conn.nodes_discovered)
+            print("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
+
+            pass
 
 def read_addr_payload(stream):
     r = {}
@@ -86,24 +102,6 @@ def read_addr_payload(stream):
     r["addresses"] = [read_address(stream) for _ in range(count)]
     return r
 
-def crawler(nodes):
-    while True:
-        node = nodes.pop()
-        try:
-            conn = Connection(node)
-            conn.open()
-        except (OSError, BitcoinProtocolError) as e:
-            print("Got error {}".format(str(e)))
-            continue
-        finally:
-            conn.close()
-
-        # Handle the results
-        nodes.extend(conn.nodes_discovered)
-        print("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
-
-
-
 if __name__ == '__main__':
     nodes = [Node('204.236.245.12', '8333')]
-    crawler(nodes)
+    Crawler(nodes).crawl()
