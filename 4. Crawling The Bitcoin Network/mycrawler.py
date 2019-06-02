@@ -1,4 +1,5 @@
-from lib import handshake, read_msg, serialize_msg, read_varint
+from lib import handshake, read_msg, serialize_msg, read_varint, read_address
+from io import BytesIO
 
 def read_addr_payload(stream):
     r = {}
@@ -35,7 +36,7 @@ def listener(address):
         # handle peer lists
         if command == b'addr':
             payload = read_addr_payload(BytesIO(msg['payload']))
-            print(msg['payload'])
+            print(payload)
 
 if __name__ == '__main__':
     listener(('204.236.245.12', '8333'))
