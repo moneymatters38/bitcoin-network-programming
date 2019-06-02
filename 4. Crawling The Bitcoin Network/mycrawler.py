@@ -24,25 +24,29 @@ class Connection:
         self.peer_version_payload = None
         self.nodes_discovered = []
 
+    def handle_ping(self, payload):
+        res = serialize_msg(command=b'pong', payload=payload)
+        self.sock.sendall(res)
+        print('Sent pong')
+
+    def handle_addr(self, payload):
+        payload = read_addr_payload(BytesIO(payload))
+        if len(payload['addresses']) > 1:
+            self.nodes_discovered.extend([
+                    Node(a['ip'], a['port']) for a in payload['addresses']
+            ])
+
     def handle_msg(self):
         msg = read_msg(self.stream)
-        command = msg['command']
+        command = msg['command'].decode()
         payload_len = len(msg['payload'])
+        payload = msg['payload']
         print('Received a {} containing {} bytes'.format(command, payload_len))
 
-        # respond to ping
-        if command == b'ping':
-            res = serialize_msg(command=b'pong', payload=msg['payload'])
-            self.sock.sendall(res)
-            print('Sent pong')
+        method_name = "handle_{}".format(command)
 
-        # handle peer lists
-        if command == b'addr':
-            payload = read_addr_payload(BytesIO(msg['payload']))
-            if len(payload['addresses']) > 1:
-                self.nodes_discovered.extend([
-                    Node(a['ip'], a['port']) for a in payload['addresses']
-                    ])
+        if hasattr(self, method_name):
+            getattr(self, method_name)(payload)
 
     def remain_alive(self):
         return not self.nodes_discovered
