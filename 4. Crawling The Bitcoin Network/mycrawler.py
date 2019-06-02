@@ -15,35 +15,39 @@ def read_addr_payload(stream):
 def listener(addresses):
     while True:
         address = addresses.pop()
-        # Establish connection
-        print("Connecting to {}".format(address))
-        sock = handshake(address)
-        stream = sock.makefile('rb')
+        try:
+            # Establish connection
+            print("Connecting to {}".format(address))
+            sock = handshake(address)
+            stream = sock.makefile('rb')
 
-        # Request peer's peers
-        sock.sendall(serialize_msg(b'getaddr'))
+            # Request peer's peers
+            sock.sendall(serialize_msg(b'getaddr'))
 
-        # Print every possible gossip message we receive
-        while True:
-            msg = read_msg(stream)
-            command = msg['command']
-            payload_len = len(msg['payload'])
-            print('Received a {} containing {} bytes'.format(command, payload_len))
+            # Print every possible gossip message we receive
+            while True:
+                msg = read_msg(stream)
+                command = msg['command']
+                payload_len = len(msg['payload'])
+                print('Received a {} containing {} bytes'.format(command, payload_len))
 
-            # respond to pong
-            if command == b'ping':
-                res = serialize_msg(command=b'pong', payload=msg['payload'])
-                sock.sendall(res)
-                print('Sent pong')
+                # respond to pong
+                if command == b'ping':
+                    res = serialize_msg(command=b'pong', payload=msg['payload'])
+                    sock.sendall(res)
+                    print('Sent pong')
 
-            # handle peer lists
-            if command == b'addr':
-                payload = read_addr_payload(BytesIO(msg['payload']))
-                if len(payload) > 0:
-                    addresses.extend([
-                        (a['ip'], a['port']) for a in payload['addresses']
-                        ])
-                    break
+                # handle peer lists
+                if command == b'addr':
+                    payload = read_addr_payload(BytesIO(msg['payload']))
+                    if len(payload['addresses']) > 1:
+                        addresses.extend([
+                            (a['ip'], a['port']) for a in payload['addresses']
+                            ])
+                        break
+        except Exception as e:
+            print("Got error {}".format(str(e)))
+            continue
 
 if __name__ == '__main__':
     listener([('204.236.245.12', '8333')])
