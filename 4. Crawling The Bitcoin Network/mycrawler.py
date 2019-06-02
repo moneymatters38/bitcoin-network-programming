@@ -1,6 +1,7 @@
-from lib import handshake, read_msg, serialize_msg, read_varint, read_address, BitcoinProtocolError
+from lib import handshake, read_msg, serialize_msg, read_varint, read_address, BitcoinProtocolError, serialize_version_payload, read_version_payload
 from io import BytesIO
 import time
+import socket
 
 class Node:
 
@@ -14,8 +15,9 @@ class Node:
 
 class Connection:
 
-    def __init__(self, node):
+    def __init__(self, node, timeout=10):
         self.node = node
+        self.timeout = timeout
         self.sock = None
         self.stream = None
         self.start = None
@@ -23,6 +25,28 @@ class Connection:
         # results
         self.peer_version_payload = None
         self.nodes_discovered = []
+
+    def send_version(self):
+        # send our version message
+        payload = serialize_version_payload()
+        msg = serialize_msg(command=b"version", payload=payload)
+        self.sock.sendall(msg)
+
+    def send_verack(self):
+        msg = serialize_msg(command=b"verack")
+        self.sock.sendall(msg)
+
+    def handle_version(self, payload):
+        # save their version payload
+        stream = BytesIO(payload)
+        self.peer_version_payload = read_version_payload(stream)
+
+        # ack
+        self.send_verack()
+
+    def handle_verack(self, payload):
+        # Request peer's peers
+        self.sock.sendall(serialize_msg(b'getaddr'))
 
     def handle_ping(self, payload):
         res = serialize_msg(command=b'pong', payload=payload)
@@ -39,14 +63,10 @@ class Connection:
     def handle_msg(self):
         msg = read_msg(self.stream)
         command = msg['command'].decode()
-        payload_len = len(msg['payload'])
-        payload = msg['payload']
-        print('Received a {} containing {} bytes'.format(command, payload_len))
-
+        print('Received a "{}"'.format(command))
         method_name = "handle_{}".format(command)
-
         if hasattr(self, method_name):
-            getattr(self, method_name)(payload)
+            getattr(self, method_name)(msg['payload'])
 
     def remain_alive(self):
         return not self.nodes_discovered
@@ -57,11 +77,11 @@ class Connection:
 
         # open TCP connection
         print("Connecting to {}".format(self.node.ip))
-        self.sock = handshake(self.node.address)
-        self.stream = self.sock.makefile('rb')
+        self.sock = socket.create_connection(self.node.address, timeout=self.timeout)
+        self.stream = self.sock.makefile("rb")
 
-        # Request peer's peers
-        self.sock.sendall(serialize_msg(b'getaddr'))
+        # Start version handshake
+        self.send_version()
 
         # Handle messages until program exits
         while self.remain_alive():
