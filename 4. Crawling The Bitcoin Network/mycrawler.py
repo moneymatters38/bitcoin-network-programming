@@ -1,6 +1,35 @@
 from lib import handshake, read_msg, serialize_msg, read_varint, read_address
 from io import BytesIO
 
+class Node:
+
+    def __init__(self, ip, port):
+        self.ip = ip
+        self.port = port
+
+    @property
+    def address(self):
+        return (self.ip, self.port)
+
+class Connection:
+
+    def __init__(self):
+        pass
+
+    def open(self):
+        pass
+
+    def close(self):
+        pass
+
+class Crawler:
+
+    def __init__(self, nodes):
+        self.nodes = nodes
+
+    def crawl(self):
+        pass
+
 def read_addr_payload(stream):
     r = {}
 
