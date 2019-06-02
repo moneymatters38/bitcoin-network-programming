@@ -1,5 +1,6 @@
 from lib import handshake, read_msg, serialize_msg, read_varint, read_address
 from io import BytesIO
+import time
 
 class Node:
 
@@ -24,7 +25,6 @@ class Connection:
         self.nodes_discovered = []
 
     def handle_msg(self):
-        # Handle next message
         msg = read_msg(self.stream)
         command = msg['command']
         payload_len = len(msg['payload'])
@@ -49,7 +49,10 @@ class Connection:
         return not self.nodes_discovered
 
     def open(self):
-        # Establish connection
+        # set start time
+        self.start = time.time()
+
+        # open TCP connection
         print("Connecting to {}".format(self.node.ip))
         self.sock = handshake(self.node.address)
         self.stream = self.sock.makefile('rb')
@@ -57,11 +60,12 @@ class Connection:
         # Request peer's peers
         self.sock.sendall(serialize_msg(b'getaddr'))
 
-        # Print every possible gossip message we receive
+        # Handle messages until program exits
         while self.remain_alive():
             self.handle_msg()
 
     def close(self):
+        # clean up socket's file descriptor
         if self.sock:
             self.sock.close()
 
