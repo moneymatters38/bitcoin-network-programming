@@ -41,9 +41,8 @@ class Connection:
             payload = read_addr_payload(BytesIO(msg['payload']))
             if len(payload['addresses']) > 1:
                 self.nodes_discovered.extend([
-                    (a['ip'], a['port']) for a in payload['addresses']
+                    Node(a['ip'], a['port']) for a in payload['addresses']
                     ])
-                break
 
     def remain_alive(self):
         return not self.nodes_discovered
@@ -101,7 +100,7 @@ def crawler(nodes):
 
         # Handle the results
         nodes.extend(conn.nodes_discovered)
-        print("{} reports version {}".format(conn.nodes.ip, conn.peer_version_payload))
+        print("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
 
 
 
