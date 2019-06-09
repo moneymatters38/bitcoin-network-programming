@@ -126,9 +126,13 @@ class Crawler:
     def __init__(self, timeout=10):
         self.timeout = timeout
         self.nodes = []
+        self.connections = []
 
     def seed(self):
         self.nodes.extend(query_dns_seeds())
+
+    def print_report(self):
+        print("nodes: {} | connections: {}".format(len(self.nodes), len(self.connections)))
 
     def crawl(self):
         # DNS lookup
@@ -148,6 +152,7 @@ class Crawler:
 
             # Handle the results
             self.nodes.extend(conn.nodes_discovered)
+            self.connections.append(conn)
             print("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
 
             pass
