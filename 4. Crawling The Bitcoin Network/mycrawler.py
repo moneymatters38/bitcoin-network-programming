@@ -154,7 +154,7 @@ class Crawler:
             self.nodes.extend(conn.nodes_discovered)
             self.connections.append(conn)
             print("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
-
+            self.print_report()
             pass
 
 def read_addr_payload(stream):
