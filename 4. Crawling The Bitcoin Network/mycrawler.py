@@ -22,7 +22,7 @@ def query_dns_seeds():
             addresses = [ai[-1][:2] for ai in addr_info]
             nodes.extend([Node(*addr) for addr in addresses])
         except OSError as e:
-            print(f"DNS seed query failed: {str(e)}")
+            print("DNS seed query failed: {}".format(str(e)))
     return nodes
 
 class Node:
@@ -123,10 +123,16 @@ class Connection:
 
 class Crawler:
 
-    def __init__(self, nodes):
-        self.nodes = nodes
+    def __init__(self):
+        self.nodes = []
+
+    def seed(self):
+        self.nodes.extend(query_dns_seeds())
 
     def crawl(self):
+        # DNS lookup
+        self.seed()
+
         while True:
             # Get next node and connect
             node = self.nodes.pop()
@@ -156,5 +162,4 @@ def read_addr_payload(stream):
     return r
 
 if __name__ == '__main__':
-    nodes = [Node('204.236.245.12', '8333')]
-    Crawler(nodes).crawl()
+    Crawler().crawl()
