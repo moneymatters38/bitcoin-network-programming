@@ -37,7 +37,7 @@ class Node:
 
 class Connection:
 
-    def __init__(self, node, timeout=10):
+    def __init__(self, node, timeout):
         self.node = node
         self.timeout = timeout
         self.sock = None
@@ -123,7 +123,8 @@ class Connection:
 
 class Crawler:
 
-    def __init__(self):
+    def __init__(self, timeout=10):
+        self.timeout = timeout
         self.nodes = []
 
     def seed(self):
@@ -137,7 +138,7 @@ class Crawler:
             # Get next node and connect
             node = self.nodes.pop()
             try:
-                conn = Connection(node)
+                conn = Connection(node, timeout=self.timeout)
                 conn.open()
             except (OSError, BitcoinProtocolError) as e:
                 print("Got error {}".format(str(e)))
@@ -162,4 +163,4 @@ def read_addr_payload(stream):
     return r
 
 if __name__ == '__main__':
-    Crawler().crawl()
+    Crawler(timeout=1).crawl()
