@@ -3,6 +3,28 @@ from io import BytesIO
 import time
 import socket
 
+DNS_SEEDS = [
+    'dnsseed.bitcoin.dashjr.org',
+    'dnsseed.bluematt.me',
+    'seed.bitcoin.sipa.be',
+    'seed.bitcoinstats.com',
+    'seed.bitcoin.jonasschnelli.ch',
+    'seed.btc.petertodd.org',
+    'seed.bitcoin.sprovoost.nl',
+    'dnsseed.emzy.de',
+]
+
+def query_dns_seeds():
+    nodes = []
+    for seed in DNS_SEEDS:
+        try:
+            addr_info = socket.getaddrinfo(seed, 8333, 0, socket.SOCK_STREAM)
+            addresses = [ai[-1][:2] for ai in addr_info]
+            nodes.extend([Node(*addr) for addr in addresses])
+        except OSError as e:
+            print(f"DNS seed query failed: {str(e)}")
+    return nodes
+
 class Node:
 
     def __init__(self, ip, port):
