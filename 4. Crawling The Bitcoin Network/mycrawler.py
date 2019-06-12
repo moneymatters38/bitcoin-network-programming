@@ -2,6 +2,7 @@ from lib import handshake, read_msg, serialize_msg, read_varint, read_address, B
 from io import BytesIO
 import time
 import socket
+import threading, queue
 
 DNS_SEEDS = [
     'dnsseed.bitcoin.dashjr.org',
@@ -121,41 +122,66 @@ class Connection:
         if self.sock:
             self.sock.close()
 
-class Crawler:
+class Worker(threading.Thread):
 
-    def __init__(self, timeout=10):
+    def __init__(self, worker_inputs, worker_outputs, timeout):
+        super().__init__()
+        self.worker_inputs = worker_inputs
+        self.worker_outputs = worker_outputs
         self.timeout = timeout
-        self.nodes = []
-        self.connections = []
 
-    def seed(self):
-        self.nodes.extend(query_dns_seeds())
-
-    def print_report(self):
-        print("nodes: {} | connections: {}".format(len(self.nodes), len(self.connections)))
-
-    def crawl(self):
-        # DNS lookup
-        self.seed()
-
+    def run(self):
         while True:
             # Get next node and connect
-            node = self.nodes.pop()
+            node = self.worker_inputs.get()
+
             try:
                 conn = Connection(node, timeout=self.timeout)
                 conn.open()
             except (OSError, BitcoinProtocolError) as e:
                 print("Got error {}".format(str(e)))
-                continue
             finally:
                 conn.close()
 
+            # Report results back to crawler
+            self.worker_outputs.put(conn)
+
+class Crawler:
+
+    def __init__(self, num_workers=10, timeout=10):
+        self.timeout = timeout
+        self.worker_inputs = queue.Queue()
+        self.worker_outputs = queue.Queue()
+        self.workers = [Worker(self.worker_inputs, self.worker_outputs, timeout) for _ in range(num_workers)]
+
+    def seed(self):
+        for node in query_dns_seeds():
+            self.worker_inputs.put(node)
+
+    def print_report(self):
+        print("inputs: {} | outputs: {}", self.worker_inputs.qsize(), self.worker_outputs.qsize())
+
+    def main_loop(self):
+        while True:
+
+            conn = self.worker_outputs.get()
+
             # Handle the results
-            self.nodes.extend(conn.nodes_discovered)
-            self.connections.append(conn)
+            for node in conn.nodes_discovered:
+                self.worker_inputs.put(node)
+
             print("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
-            self.print_report()
-            pass
+
+    def crawl(self):
+        # DNS lookup
+        self.seed()
+
+        # Start workers
+        for worker in self.workers:
+            worker.start()
+
+        # manage workers until program ends
+        self.main_loop()
 
 def read_addr_payload(stream):
     r = {}
