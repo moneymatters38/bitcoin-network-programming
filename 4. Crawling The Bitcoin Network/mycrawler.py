@@ -3,6 +3,10 @@ from io import BytesIO
 import time
 import socket
 import threading, queue
+import logging
+
+logging.basicConfig(level='INFO', filename='crawler.log')
+logger = logging.getLogger(__name__)
 
 DNS_SEEDS = [
     'dnsseed.bitcoin.dashjr.org',
@@ -23,7 +27,7 @@ def query_dns_seeds():
             addresses = [ai[-1][:2] for ai in addr_info]
             nodes.extend([Node(*addr) for addr in addresses])
         except OSError as e:
-            print("DNS seed query failed: {}".format(str(e)))
+            logger.info("DNS seed query failed: {}".format(str(e)))
     return nodes
 
 class Node:
@@ -62,7 +66,7 @@ class Connection:
     def send_pong(self, payload):
         res = serialize_msg(command=b'pong', payload=payload)
         self.sock.sendall(res)
-        print('Sent pong')
+        logger.info('Sent pong')
 
     def send_getaddr(self):
         self.sock.sendall(serialize_msg(b'getaddr'))
@@ -92,7 +96,7 @@ class Connection:
     def handle_msg(self):
         msg = read_msg(self.stream)
         command = msg['command'].decode()
-        print('Received a "{}"'.format(command))
+        logger.info('Received a "{}"'.format(command))
         method_name = "handle_{}".format(command)
         if hasattr(self, method_name):
             getattr(self, method_name)(msg['payload'])
@@ -106,7 +110,7 @@ class Connection:
         self.start = time.time()
 
         # open TCP connection
-        print("Connecting to {}".format(self.node.ip))
+        logger.info("Connecting to {}".format(self.node.ip))
         self.sock = socket.create_connection(self.node.address, timeout=self.timeout)
         self.stream = self.sock.makefile("rb")
 
@@ -139,7 +143,7 @@ class Worker(threading.Thread):
                 conn = Connection(node, timeout=self.timeout)
                 conn.open()
             except (OSError, BitcoinProtocolError) as e:
-                print("Got error {}".format(str(e)))
+                logger.info("Got error {}".format(str(e)))
             finally:
                 conn.close()
 
@@ -170,7 +174,7 @@ class Crawler:
             for node in conn.nodes_discovered:
                 self.worker_inputs.put(node)
 
-            print("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
+            logger.info("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
 
     def crawl(self):
         # DNS lookup
