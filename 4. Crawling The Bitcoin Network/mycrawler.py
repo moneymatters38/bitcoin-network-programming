@@ -147,7 +147,7 @@ class Worker(threading.Thread):
             finally:
                 conn.close()
 
-            # Report results back to crawler
+            # Report results back to the crawler
             self.worker_outputs.put(conn)
 
 class Crawler:
@@ -156,7 +156,7 @@ class Crawler:
         self.timeout = timeout
         self.worker_inputs = queue.Queue()
         self.worker_outputs = queue.Queue()
-        self.workers = [Worker(self.worker_inputs, self.worker_outputs, timeout) for _ in range(num_workers)]
+        self.workers = [Worker(self.worker_inputs, self.worker_outputs, self.timeout) for _ in range(num_workers)]
 
     def seed(self):
         for node in query_dns_seeds():
@@ -175,6 +175,7 @@ class Crawler:
                 self.worker_inputs.put(node)
 
             logger.info("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
+            self.print_report()
 
     def crawl(self):
         # DNS lookup
@@ -198,4 +199,4 @@ def read_addr_payload(stream):
     return r
 
 if __name__ == '__main__':
-    Crawler(timeout=1).crawl()
+    Crawler(timeout=10).crawl()

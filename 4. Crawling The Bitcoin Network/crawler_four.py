@@ -14,9 +14,9 @@ def read_addr_payload(stream):
 
 
 DNS_SEEDS = [
-    'dnsseed.bitcoin.dashjr.org', 
+    'dnsseed.bitcoin.dashjr.org',
     'dnsseed.bluematt.me',
-    'seed.bitcoin.sipa.be', 
+    'seed.bitcoin.sipa.be',
     'seed.bitcoinstats.com',
     'seed.bitcoin.jonasschnelli.ch',
     'seed.btc.petertodd.org',
@@ -33,7 +33,7 @@ def query_dns_seeds():
             addresses = [ai[-1][:2] for ai in addr_info]
             nodes.extend([Node(*addr) for addr in addresses])
         except OSError as e:
-            print(f"DNS seed query failed: {str(e)}")
+            print("DNS seed query failed: {}".format(str(e)))
     return nodes
 
 
@@ -102,8 +102,8 @@ class Connection:
     def handle_msg(self):
         msg = read_msg(self.stream)
         command = msg['command'].decode()
-        print(f'Received a "{command}"')
-        method_name = f'handle_{command}'
+        print('Received a "{}"'.format(command))
+        method_name = 'handle_{}'.format(command)
         if hasattr(self, method_name):
             getattr(self, method_name)(msg['payload'])
 
@@ -116,8 +116,8 @@ class Connection:
         self.start = time.time()
 
         # Open TCP connection
-        print(f'Connecting to {self.node.ip}')
-        self.sock = socket.create_connection(self.node.address, 
+        print('Connecting to {}'.format(self.node.ip))
+        self.sock = socket.create_connection(self.node.address,
                                              timeout=self.timeout)
         self.stream = self.sock.makefile('rb')
 
@@ -147,7 +147,7 @@ class Crawler:
         # DNS lookups
         self.seed()
 
-        while :
+        while True:
             # Get next node and connect
             node = self.nodes.pop()
 
@@ -155,13 +155,13 @@ class Crawler:
                 conn = Connection(node, timeout=self.timeout)
                 conn.open()
             except (OSError, BitcoinProtocolError) as e:
-                print(f'Got error: {str(e)}')
+                print('Got error: {}'.format(str(e)))
             finally:
                 conn.close()
 
             # Handle the results
             self.nodes.extend(conn.nodes_discovered)
-            print(f'{conn.node.ip} reports version {conn.peer_version_payload}')
+            print("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
 
 
 if __name__ == '__main__':

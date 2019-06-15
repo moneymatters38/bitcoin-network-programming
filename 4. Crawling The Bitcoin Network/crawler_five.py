@@ -21,9 +21,9 @@ def read_addr_payload(stream):
 
 
 DNS_SEEDS = [
-    'dnsseed.bitcoin.dashjr.org', 
+    'dnsseed.bitcoin.dashjr.org',
     'dnsseed.bluematt.me',
-    'seed.bitcoin.sipa.be', 
+    'seed.bitcoin.sipa.be',
     'seed.bitcoinstats.com',
     'seed.bitcoin.jonasschnelli.ch',
     'seed.btc.petertodd.org',
@@ -40,7 +40,7 @@ def query_dns_seeds():
             addresses = [ai[-1][:2] for ai in addr_info]
             nodes.extend([Node(*addr) for addr in addresses])
         except OSError as e:
-            logger.info(f"DNS seed query failed: {str(e)}")
+            logger.info("DNS seed query failed: {}".format(str(e)))
     return nodes
 
 
@@ -109,8 +109,8 @@ class Connection:
     def handle_msg(self):
         msg = read_msg(self.stream)
         command = msg['command'].decode()
-        logger.info(f'Received a "{command}"')
-        method_name = f'handle_{command}'
+        logger.info('Received a "{}"'.format(command))
+        method_name = 'handle_{command}'.format(command)
         if hasattr(self, method_name):
             getattr(self, method_name)(msg['payload'])
 
@@ -123,8 +123,8 @@ class Connection:
         self.start = time.time()
 
         # Open TCP connection
-        logger.info(f'Connecting to {self.node.ip}')
-        self.sock = socket.create_connection(self.node.address, 
+        logger.info('Connecting to {}'.format(self.node.ip))
+        self.sock = socket.create_connection(self.node.address,
                                              timeout=self.timeout)
         self.stream = self.sock.makefile('rb')
 
@@ -158,7 +158,7 @@ class Worker(threading.Thread):
                 conn = Connection(node, timeout=self.timeout)
                 conn.open()
             except (OSError, BitcoinProtocolError) as e:
-                logger.info(f'Got error: {str(e)}')
+                logger.info("Got error {}".format(str(e)))
             finally:
                 conn.close()
 
@@ -182,8 +182,8 @@ class Crawler:
             self.worker_inputs.put(node)
 
     def print_report(self):
-        print(f'inputs: {self.worker_inputs.qsize()} | '
-              f'outputs: {self.worker_outputs.qsize()}')
+        print('inputs: {} '.format(self.worker_inputs.qsize()) +
+              'outputs: {}'.format(self.worker_outputs.qsize()))
 
     def main_loop(self):
         while True:
@@ -194,7 +194,7 @@ class Crawler:
             for node in conn.nodes_discovered:
                 self.worker_inputs.put(node)
 
-            logger.info(f'{conn.node.ip} reports version {conn.peer_version_payload}')
+            logger.info("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
             self.print_report()
 
     def crawl(self):
@@ -212,4 +212,4 @@ class Crawler:
 
 
 if __name__ == '__main__':
-    Crawler(num_workers=25, timeout=1).crawl()
+    Crawler(num_workers=2, timeout=1).crawl()
