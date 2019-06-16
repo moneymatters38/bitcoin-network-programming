@@ -165,6 +165,10 @@ class Crawler:
         for node in nodes:
             self.worker_inputs.put(node)
 
+    def process_worker_outputs(self):
+        conn = self.worker_outputs.get()
+        db.process_worker_outputs(conn)
+
     def seed_db(self):
         for node in query_dns_seeds():
             db.insert_node(node.__dict__)
@@ -174,18 +178,18 @@ class Crawler:
 
     def main_loop(self):
         while True:
+            # Fill input queue if running low
+            if self.worker_inputs.qsize() < len(self.workers):
+                self.add_worker_inputs()
 
-            conn = self.worker_outputs.get()
+            # Process worker outputs
+            self.process_worker_outputs()
 
-            # Handle the results
-            for node in conn.nodes_discovered:
-                self.worker_inputs.put(node)
-
-            logger.info("{} reports version {}".format(conn.node.ip, conn.peer_version_payload))
+            # Print report
             self.print_report()
 
     def crawl(self):
-        # DNS lookup
+        # Seed database with initial nodes from DNS seeds
         self.seed_db()
 
         # Fill the worker queues
@@ -195,7 +199,7 @@ class Crawler:
         for worker in self.workers:
             worker.start()
 
-        # manage workers until program ends
+        # Manage workers until program ends
         self.main_loop()
 
 def read_addr_payload(stream):
