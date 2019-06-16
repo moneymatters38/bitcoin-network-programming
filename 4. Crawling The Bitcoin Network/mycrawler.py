@@ -160,9 +160,12 @@ class Crawler:
         self.worker_outputs = queue.Queue()
         self.workers = [Worker(self.worker_inputs, self.worker_outputs, self.timeout) for _ in range(num_workers)]
 
+    @property
+    def batch_size(self):
+        return len(self.workers)* 10
+
     def add_worker_inputs(self):
-        num_nodes = len(self.workers)*10
-        nodes = db.next_nodes(num_nodes)
+        nodes = db.next_nodes(self.batch_size)
         for node in nodes:
             self.worker_inputs.put(node)
 
@@ -190,11 +193,11 @@ class Crawler:
             # Print report
             self.print_report()
             # Fill input queue if running low
-            if self.worker_inputs.qsize() < len(self.workers):
+            if self.worker_inputs.qsize() < self.batch_size:
                 self.add_worker_inputs()
 
             # Process worker outputs if running high
-            if self.worker_outputs.qsize() > len(self.workers):
+            if self.worker_outputs.qsize() > self.batch_size:
                 self.process_worker_outputs()
 
             # Only check once per second
