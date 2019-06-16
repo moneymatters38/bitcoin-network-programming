@@ -4,6 +4,7 @@ import time
 import socket
 import threading, queue
 import logging
+import mydb as db
 
 logging.basicConfig(level='INFO', filename='crawler.log')
 logger = logging.getLogger(__name__)
@@ -158,9 +159,9 @@ class Crawler:
         self.worker_outputs = queue.Queue()
         self.workers = [Worker(self.worker_inputs, self.worker_outputs, self.timeout) for _ in range(num_workers)]
 
-    def seed(self):
+    def seed_db(self):
         for node in query_dns_seeds():
-            self.worker_inputs.put(node)
+            db.insert_node(node.__dict__)
 
     def print_report(self):
         print("inputs: {} | outputs: {}", self.worker_inputs.qsize(), self.worker_outputs.qsize())
