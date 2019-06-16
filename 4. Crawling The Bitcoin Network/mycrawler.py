@@ -167,7 +167,7 @@ class Crawler:
 
     def process_worker_outputs(self):
         conn = self.worker_outputs.get()
-        db.process_worker_outputs(conn)
+        db.process_crawler_outputs(conn)
 
     def seed_db(self):
         for node in query_dns_seeds():

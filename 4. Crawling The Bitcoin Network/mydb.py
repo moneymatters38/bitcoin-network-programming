@@ -86,17 +86,22 @@ def insert_node(query_args):
 
 def insert_connection(query_args):
     query = """
-    INSERT INTO connections 
-        (version, start, services, sender_timestamp, receiver_services, 
-        receiver_ip, receiver_port, sender_services, sender_ip, sender_port, 
+    INSERT INTO connections
+        (version, start, services, sender_timestamp, receiver_services,
+        receiver_ip, receiver_port, sender_services, sender_ip, sender_port,
         nonce, user_agent, latest_block, relay, node_id)
     VALUES
-        (:version, :start, :services, :sender_timestamp, 
-         :receiver_services, :receiver_ip, :receiver_port, :sender_services, :sender_ip, 
+        (:version, :start, :services, :sender_timestamp,
+         :receiver_services, :receiver_ip, :receiver_port, :sender_services, :sender_ip,
          :sender_port, :nonce, :user_agent, :latest_block, :relay, :node_id)
     """
     return execute(query, query_args)
 
+def process_crawler_outputs(conn):
+    # Save the connection
+
+    # Save any nodes discovered
+    pass
 
 def next_nodes(n):
     return execute(
