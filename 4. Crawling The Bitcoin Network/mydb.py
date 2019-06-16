@@ -2,6 +2,7 @@ import sqlite3
 import time
 
 DB_FILE = 'crawler.db'
+ONE_HOUR = 60*60
 
 empty_version_payload = dict.fromkeys(['version', 'services', 'sender_timestamp',
     'receiver_services', 'receiver_ip', 'receiver_port', 'sender_services',
@@ -91,6 +92,18 @@ def insert_nodes(query_args):
     """
     return executemany(query, query_args)
 
+def update_nodes(query_args):
+    query = """
+    UPDATE nodes
+    SET
+       next_visit = :next_visit,
+       visits_missed = :visits_missed,
+    WHERE
+       id = :id
+    )
+    """
+    return executemany(query, query_args)
+
 
 def insert_connections(query_args):
     query = """
@@ -108,6 +121,7 @@ def insert_connections(query_args):
 def process_crawler_outputs(conns):
     # Initialize arguments to insert_x functions
     insert_nodes_args = []
+    update_nodes_args = []
     insert_connections_args = []
 
     for conn in conns:
@@ -126,8 +140,20 @@ def process_crawler_outputs(conns):
         args['node_id'] = conn.node.id
         insert_connections_args.append(args)
 
+        # Prepare args to update_nodes()
+        if conn.peer_version_payload:
+            # if online, visit again in 1 hr, set visits_missed = 0
+            conn.node.next_visit = time.time() + ONE_HOUR
+            conn.node.visits_missed = 0
+        else:
+            #  if offline, visit in 2**visits_missed hours and increment visits_missed
+            conn.node.next_visit = time.time() + 2**conn.node.visits_missed * ONE_HOUR
+            conn.node.visits_missed += 1
+        update_nodes_args.append(conn.node.__dict__)
+
     # Hit the database
     insert_nodes(insert_nodes_args)
+    update_nodes(update_nodes_args)
     insert_connections(insert_connections_args)
 
 def next_nodes(n):
