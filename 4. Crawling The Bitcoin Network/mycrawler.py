@@ -159,6 +159,12 @@ class Crawler:
         self.worker_outputs = queue.Queue()
         self.workers = [Worker(self.worker_inputs, self.worker_outputs, self.timeout) for _ in range(num_workers)]
 
+    def add_worker_inputs(self):
+        num_nodes = len(self.workers)*10
+        nodes = db.next_nodes(num_nodes)
+        for node in nodes:
+            self.worker_inputs.put(node)
+
     def seed_db(self):
         for node in query_dns_seeds():
             db.insert_node(node.__dict__)
@@ -180,7 +186,10 @@ class Crawler:
 
     def crawl(self):
         # DNS lookup
-        self.seed()
+        self.seed_db()
+
+        # Fill the worker queues
+        self.add_worker_inputs()
 
         # Start workers
         for worker in self.workers:
