@@ -57,6 +57,12 @@ def execute(statement, args={}, row_factory=None):
             conn.row_factory = row_factory
         return conn.execute(statement, args)
 
+def executemany(statement, args={}, row_factory=None):
+    with sqlite3.connect(DB_FILE) as conn:
+        if row_factory:
+            conn.row_factory = row_factory
+        return conn.executemany(statement, args)
+
 
 def create_tables():
     execute(create_nodes_table_query)
@@ -73,7 +79,7 @@ def drop_and_create_tables():
     create_tables()
 
 
-def insert_node(query_args):
+def insert_nodes(query_args):
     query = """
     INSERT OR IGNORE INTO nodes (
         ip, port
@@ -81,10 +87,10 @@ def insert_node(query_args):
         :ip, :port
     )
     """
-    return execute(query, query_args)
+    return executemany(query, query_args)
 
 
-def insert_connection(query_args):
+def insert_connections(query_args):
     query = """
     INSERT INTO connections
         (version, start, services, sender_timestamp, receiver_services,
@@ -95,24 +101,32 @@ def insert_connection(query_args):
          :receiver_services, :receiver_ip, :receiver_port, :sender_services, :sender_ip,
          :sender_port, :nonce, :user_agent, :latest_block, :relay, :node_id)
     """
-    return execute(query, query_args)
+    return executemany(query, query_args)
 
-def process_crawler_outputs(conn):
-    # Save any nodes discovered
-    for node in conn.nodes_discovered:
-        insert_node(node.__dict__)
+def process_crawler_outputs(conns):
+    # Initialize arguments to insert_x functions
+    insert_nodes_args = []
+    insert_connections_args = []
 
-    # Save the connection
-    if conn.peer_version_payload:
-        args = conn.peer_version_payload.copy()
-        args['nonce'] = str(args['nonce']) # HACK
-    else:
-        args = empty_version_payload.copy()
+    for conn in conns:
+        # Prepare args to insert_nodes() from newly discovered nodes
+        for node in conn.nodes_discovered:
+            insert_nodes_args.append(node.__dict__)
 
-    args['start'] = conn.start
-    args['node_id'] = conn.node.id
+        # Prepare args to insert_connections()
+        if conn.peer_version_payload:
+            args = conn.peer_version_payload.copy()
+            args['nonce'] = str(args['nonce']) # HACK
+        else:
+            args = empty_version_payload.copy()
 
-    insert_connection(args)
+        args['start'] = conn.start
+        args['node_id'] = conn.node.id
+        insert_connections_args.append(args)
+
+    # Hit the database
+    insert_nodes(insert_nodes_args)
+    insert_connections(insert_connections_args)
 
 def next_nodes(n):
     return execute(
