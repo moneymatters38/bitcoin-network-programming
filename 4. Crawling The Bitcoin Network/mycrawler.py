@@ -175,7 +175,10 @@ class Crawler:
             db.insert_node(node.__dict__)
 
     def print_report(self):
-        print("inputs: {} | outputs: {}", self.worker_inputs.qsize(), self.worker_outputs.qsize())
+        print("inputs: {} |
+        outputs: {} |
+        visited: {} |
+        total: {}", self.worker_inputs.qsize(), self.worker_outputs.qsize(), db.nodes_visited(), db.nodes_total())
 
     def main_loop(self):
         while True:
@@ -214,4 +217,8 @@ def read_addr_payload(stream):
     return r
 
 if __name__ == '__main__':
-    Crawler(timeout=10).crawl()
+    # Wipe the database before every run
+    db.drop_and_create_tables()
+
+    # Run the crawler
+    Crawler(num_workers=25, timeout=10).crawl()
