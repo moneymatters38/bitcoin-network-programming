@@ -98,10 +98,21 @@ def insert_connection(query_args):
     return execute(query, query_args)
 
 def process_crawler_outputs(conn):
-    # Save the connection
-
     # Save any nodes discovered
-    pass
+    for node in conn.nodes_discovered:
+        insert_node(node.__dict__)
+
+    # Save the connection
+    if conn.peer_version_payload:
+        args = conn.peer_version_payload.copy()
+        args['nonce'] = str(args['nonce']) # HACK
+    else:
+        args = empty_version_payload.copy()
+
+    args['start'] = conn.start
+    args['node_id'] = conn.node.id
+
+    insert_connection(args)
 
 def next_nodes(n):
     return execute(

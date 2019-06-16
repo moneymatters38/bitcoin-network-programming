@@ -33,9 +33,10 @@ def query_dns_seeds():
 
 class Node:
 
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, id=None):
         self.ip = ip
         self.port = port
+        self.id = id
 
     @property
     def address(self):
