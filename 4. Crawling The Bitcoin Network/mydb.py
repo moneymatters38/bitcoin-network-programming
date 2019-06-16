@@ -100,7 +100,6 @@ def update_nodes(query_args):
        visits_missed = :visits_missed,
     WHERE
        id = :id
-    )
     """
     return executemany(query, query_args)
 
@@ -157,13 +156,16 @@ def process_crawler_outputs(conns):
     insert_connections(insert_connections_args)
 
 def next_nodes(n):
+    now = time.time()
     return execute(
         """
         SELECT *
         FROM nodes
+        WHERE next_visit < ?
+        ORDER BY next_visit ASC
         WHERE id NOT IN (SELECT node_id FROM connections)
         LIMIT ?""",
-        (n,),
+        (now,n, ),
         row_factory=node_factory
     ).fetchall()
 
