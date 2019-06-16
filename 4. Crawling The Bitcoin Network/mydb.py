@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS nodes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ip TEXT,
     port INT,
+    next_visit INT,
+    visits_missed INT,
     UNIQUE(ip, port)
 )
 """
@@ -82,9 +84,9 @@ def drop_and_create_tables():
 def insert_nodes(query_args):
     query = """
     INSERT OR IGNORE INTO nodes (
-        ip, port
+        ip, port, next_visit, visits_missed
     ) VALUES (
-        :ip, :port
+        :ip, :port, :next_visit, :visits_missed
     )
     """
     return executemany(query, query_args)

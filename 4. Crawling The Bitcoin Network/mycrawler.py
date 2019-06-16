@@ -33,10 +33,15 @@ def query_dns_seeds():
 
 class Node:
 
-    def __init__(self, ip, port, id=None):
+    def __init__(self, ip, port, id=None, next_visit=None, visits_missed=None):
+        if next_visit is None:
+            next_visit = time.time()
+
         self.ip = ip
         self.port = port
         self.id = id
+        self.next_visit = next_visit
+        self.visits_missed = visits_missed
 
     @property
     def address(self):
