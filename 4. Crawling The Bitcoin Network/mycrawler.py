@@ -5,6 +5,7 @@ import socket
 import threading, queue
 import logging
 import mydb as db
+import socks
 
 logging.basicConfig(level='INFO', filename='crawler.log')
 logger = logging.getLogger(__name__)
@@ -19,6 +20,17 @@ DNS_SEEDS = [
     'seed.bitcoin.sprovoost.nl',
     'dnsseed.emzy.de',
 ]
+
+def create_connection(address, timeout=10):
+    if 'onion' in address[0]:
+        return socks.create_connection(
+            address,
+            proxy_type=socks.PROXY_TYPE_SOCKS5,
+            proxy_addr="127.0.0.1",
+            proxy_port=9050
+        )
+    else:
+        return socket.create_connection(address, timeout)
 
 def query_dns_seeds():
     nodes = []
@@ -118,7 +130,7 @@ class Connection:
 
         # open TCP connection
         logger.info("Connecting to {}".format(self.node.ip))
-        self.sock = socket.create_connection(self.node.address, timeout=self.timeout)
+        self.sock = create_connection(self.node.address, timeout=self.timeout)
         self.stream = self.sock.makefile("rb")
 
         # Start version handshake
