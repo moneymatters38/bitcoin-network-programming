@@ -53,6 +53,8 @@ def double_sha256(s):
 
 
 def bytes_to_ip(b):
+    if b[:6] == ONION_PREFIX:
+        return b32encode(b[6:]).lower().decode("ascii") + ".onion"
     if b[0:12] == IPV4_PREFIX:  # IPv4
         return socket.inet_ntop(socket.AF_INET, b[12:16])
     else:  # IPv6
